@@ -1,0 +1,21 @@
+# Build results
+bin/
+obj/
+
+# VS Code
+.vscode/
+
+# Logs
+*.log
+
+# User-specific files
+*.user
+*.suo
+
+# Temp files
+*.tmp
+*.bak
+*.swp
+
+# Local secrets
+appsettings.Development.json
