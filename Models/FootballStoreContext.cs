@@ -2,63 +2,92 @@
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 
-namespace FootballStoreApp.Models;
-
-public partial class FootballStoreContext : DbContext
+namespace FootballStoreApp.Models
 {
-    public FootballStoreContext()
+    public partial class FootballStoreContext : DbContext
     {
+        public FootballStoreContext()
+        {
+        }
+
+        public FootballStoreContext(DbContextOptions<FootballStoreContext> options)
+            : base(options)
+        {
+        }
+
+        public virtual DbSet<Customer> Customers { get; set; } = null!;
+        public virtual DbSet<Order> Orders { get; set; } = null!;
+        public virtual DbSet<OrderItem> OrderItems { get; set; } = null!;
+        public virtual DbSet<Product> Products { get; set; } = null!;
+
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            if (!optionsBuilder.IsConfigured)
+            {
+                // ⚠️ Якщо потрібно — заміни підключення або забери конфігурацію сюди
+            }
+        }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<Customer>(entity =>
+            {
+                entity.ToTable("customers");
+
+                entity.Property(e => e.Id).HasColumnName("id");
+                entity.Property(e => e.Email).HasColumnName("email");
+                entity.Property(e => e.FullName).HasColumnName("full_name");
+                entity.Property(e => e.Phone).HasColumnName("phone");
+            });
+
+            modelBuilder.Entity<Order>(entity =>
+            {
+                entity.ToTable("orders");
+
+                entity.Property(e => e.Id).HasColumnName("id");
+                entity.Property(e => e.CustomerId).HasColumnName("customer_id");
+                entity.Property(e => e.OrderDate).HasColumnName("order_date");
+                entity.Property(e => e.Status).HasColumnName("status");
+
+                entity.HasOne(d => d.Customer)
+                    .WithMany(p => p.Orders)
+                    .HasForeignKey(d => d.CustomerId);
+            });
+
+            modelBuilder.Entity<OrderItem>(entity =>
+            {
+                entity.ToTable("order_items");
+
+                entity.Property(e => e.Id).HasColumnName("id");
+                entity.Property(e => e.OrderId).HasColumnName("order_id");
+                entity.Property(e => e.ProductId).HasColumnName("product_id");
+                entity.Property(e => e.Quantity).HasColumnName("quantity");
+                entity.Property(e => e.UnitPrice).HasColumnName("unit_price");
+
+                entity.HasOne(d => d.Order)
+                    .WithMany(p => p.OrderItems)
+                    .HasForeignKey(d => d.OrderId);
+
+                entity.HasOne(d => d.Product)
+                    .WithMany(p => p.OrderItems)
+                    .HasForeignKey(d => d.ProductId);
+            });
+
+            modelBuilder.Entity<Product>(entity =>
+            {
+                entity.ToTable("products");
+
+                entity.Property(e => e.Id).HasColumnName("id");
+                entity.Property(e => e.Category).HasColumnName("category");
+                entity.Property(e => e.Description).HasColumnName("description");
+                entity.Property(e => e.Name).HasColumnName("name");
+                entity.Property(e => e.Price).HasColumnName("price");
+                entity.Property(e => e.StockQuantity).HasColumnName("stock_quantity");
+            });
+
+            OnModelCreatingPartial(modelBuilder);
+        }
+
+        partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
     }
-
-    public FootballStoreContext(DbContextOptions<FootballStoreContext> options)
-        : base(options)
-    {
-    }
-
-    public virtual DbSet<Customer> Customers { get; set; }
-
-    public virtual DbSet<Order> Orders { get; set; }
-
-    public virtual DbSet<OrderItem> OrderItems { get; set; }
-
-    public virtual DbSet<Product> Products { get; set; }
-
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseNpgsql("Host=localhost;Port=5432;Database=football_store;Username=postgres;Password=12345");
-
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
-    {
-        modelBuilder.Entity<Customer>(entity =>
-        {
-            entity.HasKey(e => e.Id).HasName("customers_pkey");
-        });
-
-        modelBuilder.Entity<Order>(entity =>
-        {
-            entity.HasKey(e => e.Id).HasName("orders_pkey");
-
-            entity.Property(e => e.OrderDate).HasDefaultValueSql("CURRENT_TIMESTAMP");
-
-            entity.HasOne(d => d.Customer).WithMany(p => p.Orders).HasConstraintName("orders_customer_id_fkey");
-        });
-
-        modelBuilder.Entity<OrderItem>(entity =>
-        {
-            entity.HasKey(e => e.Id).HasName("order_items_pkey");
-
-            entity.HasOne(d => d.Order).WithMany(p => p.OrderItems).HasConstraintName("order_items_order_id_fkey");
-
-            entity.HasOne(d => d.Product).WithMany(p => p.OrderItems).HasConstraintName("order_items_product_id_fkey");
-        });
-
-        modelBuilder.Entity<Product>(entity =>
-        {
-            entity.HasKey(e => e.Id).HasName("products_pkey");
-        });
-
-        OnModelCreatingPartial(modelBuilder);
-    }
-
-    partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
 }
