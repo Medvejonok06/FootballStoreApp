@@ -3,6 +3,7 @@ using System;
 using FootballStoreApp.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FootballStoreApp.Migrations
 {
     [DbContext(typeof(FootballStoreContext))]
-    partial class FootballStoreContextModelSnapshot : ModelSnapshot
+    [Migration("20250615131044_updated_items_table")]
+    partial class updated_items_table
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -62,29 +65,14 @@ namespace FootballStoreApp.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("CreatedByUserId")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<decimal?>("CurrentOrFinalPrice")
                         .HasColumnType("numeric");
 
                     b.Property<string>("Description")
                         .HasColumnType("text");
 
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
-
                     b.Property<bool>("IsOnSale")
                         .HasColumnType("boolean");
-
-                    b.Property<DateTime?>("LastModifiedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int?>("LastModifiedUserId")
-                        .HasColumnType("integer");
 
                     b.Property<string>("Notes")
                         .HasColumnType("text");

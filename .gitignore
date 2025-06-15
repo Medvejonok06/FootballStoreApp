@@ -13,7 +13,8 @@ obj/
 *.suo
 
 # Temp files
-*.tmp
+*.tmpgit status
+
 *.bak
 *.swp
 

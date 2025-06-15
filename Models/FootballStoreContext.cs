@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
+using FootballStoreApp.Models;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 
 namespace FootballStoreApp.Models
 {
@@ -15,6 +17,7 @@ namespace FootballStoreApp.Models
         {
         }
 
+        public virtual DbSet<Item> Items { get; set; } = null!;
         public virtual DbSet<Customer> Customers { get; set; } = null!;
         public virtual DbSet<Order> Orders { get; set; } = null!;
         public virtual DbSet<OrderItem> OrderItems { get; set; } = null!;
@@ -24,7 +27,7 @@ namespace FootballStoreApp.Models
         {
             if (!optionsBuilder.IsConfigured)
             {
-                // ⚠️ Якщо потрібно — заміни підключення або забери конфігурацію сюди
+                // ⚠️ У Production краще налаштовувати через DI та appsettings.json
             }
         }
 
@@ -86,6 +89,44 @@ namespace FootballStoreApp.Models
             });
 
             OnModelCreatingPartial(modelBuilder);
+        }
+
+        // 🟨 Додаємо SaveChanges() для аудиту
+        public override int SaveChanges()
+        {
+            const int systemUserId = 0;
+            const int loggedInUserId = 123; // умовний поточний користувач
+
+            var entries = ChangeTracker.Entries<FullAuditModel>();
+
+            foreach (var entry in entries)
+            {
+                var now = DateTime.UtcNow;
+
+                switch (entry.State)
+                {
+                    case EntityState.Added:
+                        entry.Entity.CreatedDate = now;
+                        entry.Entity.CreatedByUserId = loggedInUserId;
+                        entry.Entity.IsActive = true;
+                        break;
+
+                    case EntityState.Modified:
+                        entry.Entity.LastModifiedDate = now;
+                        entry.Entity.LastModifiedUserId = loggedInUserId;
+                        break;
+
+                    case EntityState.Deleted:
+                        // Soft-delete
+                        entry.State = EntityState.Modified;
+                        entry.Entity.IsActive = false;
+                        entry.Entity.LastModifiedDate = now;
+                        entry.Entity.LastModifiedUserId = systemUserId;
+                        break;
+                }
+            }
+
+            return base.SaveChanges();
         }
 
         partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
