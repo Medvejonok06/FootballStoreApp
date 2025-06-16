@@ -3,6 +3,7 @@ using System;
 using FootballStoreApp.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FootballStoreApp.Migrations
 {
     [DbContext(typeof(FootballStoreContext))]
-    partial class FootballStoreContextModelSnapshot : ModelSnapshot
+    [Migration("20250616131537_updateItem_enforceStringMaxLength")]
+    partial class updateItem_enforceStringMaxLength
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,62 +24,6 @@ namespace FootballStoreApp.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
-
-            modelBuilder.Entity("FootballStoreApp.Models.Category", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<int?>("CreatedByUserId")
-                        .HasMaxLength(100)
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<DateTime?>("LastModifiedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int?>("LastModifiedUserId")
-                        .HasMaxLength(100)
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Categories");
-                });
-
-            modelBuilder.Entity("FootballStoreApp.Models.CategoryDetail", b =>
-                {
-                    b.Property<int>("Id")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("ColorName")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<string>("ColorValue")
-                        .HasMaxLength(10)
-                        .HasColumnType("character varying(10)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("CategoryDetails");
-                });
 
             modelBuilder.Entity("FootballStoreApp.Models.Customer", b =>
                 {
@@ -117,9 +64,6 @@ namespace FootballStoreApp.Migrations
                         .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<int?>("CategoryId")
-                        .HasColumnType("integer");
 
                     b.Property<int?>("CreatedByUserId")
                         .HasMaxLength(100)
@@ -173,8 +117,6 @@ namespace FootballStoreApp.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("CategoryId");
 
                     b.ToTable("Items");
                 });
@@ -281,26 +223,6 @@ namespace FootballStoreApp.Migrations
                     b.ToTable("products", (string)null);
                 });
 
-            modelBuilder.Entity("FootballStoreApp.Models.CategoryDetail", b =>
-                {
-                    b.HasOne("FootballStoreApp.Models.Category", "Category")
-                        .WithOne("CategoryDetail")
-                        .HasForeignKey("FootballStoreApp.Models.CategoryDetail", "Id")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Category");
-                });
-
-            modelBuilder.Entity("FootballStoreApp.Models.Item", b =>
-                {
-                    b.HasOne("FootballStoreApp.Models.Category", "Category")
-                        .WithMany("Items")
-                        .HasForeignKey("CategoryId");
-
-                    b.Navigation("Category");
-                });
-
             modelBuilder.Entity("FootballStoreApp.Models.Order", b =>
                 {
                     b.HasOne("FootballStoreApp.Models.Customer", "Customer")
@@ -323,13 +245,6 @@ namespace FootballStoreApp.Migrations
                     b.Navigation("Order");
 
                     b.Navigation("Product");
-                });
-
-            modelBuilder.Entity("FootballStoreApp.Models.Category", b =>
-                {
-                    b.Navigation("CategoryDetail");
-
-                    b.Navigation("Items");
                 });
 
             modelBuilder.Entity("FootballStoreApp.Models.Customer", b =>

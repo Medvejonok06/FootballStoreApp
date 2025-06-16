@@ -22,6 +22,9 @@ namespace FootballStoreApp.Models
         public virtual DbSet<Order> Orders { get; set; } = null!;
         public virtual DbSet<OrderItem> OrderItems { get; set; } = null!;
         public virtual DbSet<Product> Products { get; set; } = null!;
+        public virtual DbSet<Category> Categories { get; set; } = null!;
+        public virtual DbSet<CategoryDetail> CategoryDetails { get; set; } = null!;
+
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
