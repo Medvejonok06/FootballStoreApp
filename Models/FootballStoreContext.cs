@@ -106,6 +106,16 @@ namespace FootballStoreApp.Models
             {
                 var now = DateTime.UtcNow;
 
+                // Примусово конвертуємо дати до UTC, якщо не встановлено Kind
+                if (entry.Entity is Item item)
+                {
+                    if (item.PurchasedDate.HasValue && item.PurchasedDate.Value.Kind == DateTimeKind.Unspecified)
+                        item.PurchasedDate = DateTime.SpecifyKind(item.PurchasedDate.Value, DateTimeKind.Utc);
+
+                    if (item.SoldDate.HasValue && item.SoldDate.Value.Kind == DateTimeKind.Unspecified)
+                        item.SoldDate = DateTime.SpecifyKind(item.SoldDate.Value, DateTimeKind.Utc);
+                }
+
                 switch (entry.State)
                 {
                     case EntityState.Added:

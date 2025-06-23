@@ -10,7 +10,7 @@ namespace FootballStoreApp.Models
     {
         [Required]
         [StringLength(InventoryModelsConstants.NAME_MAX_LENGTH)]
-        public string Name { get; set; } = null!;
+        public new string Name { get; set; } = null!;
 
         [StringLength(InventoryModelsConstants.DESCRIPTION_MAX_LENGTH)]
         public string? Description { get; set; }
@@ -32,12 +32,7 @@ namespace FootballStoreApp.Models
         public DateTime? PurchasedDate { get; set; }
         public DateTime? SoldDate { get; set; }
 
-        [Required]
-        [DefaultValue(false)]
-        public bool IsDeleted { get; set; }
-
         public int? CategoryId { get; set; }
         public Category? Category { get; set; }
-
     }
 }

@@ -1,6 +1,9 @@
 ﻿using FootballStoreApp.Models;
-using Microsoft.Extensions.Configuration;
+using FootballStoreApp.Dtos;
+using FootballStoreApp.Services;
+using FootballStoreApp.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 
 IConfiguration config = new ConfigurationBuilder()
     .SetBasePath(Directory.GetCurrentDirectory())
@@ -11,62 +14,52 @@ var optionsBuilder = new DbContextOptionsBuilder<FootballStoreContext>();
 optionsBuilder.UseNpgsql(config.GetConnectionString("FootballStore"));
 
 using var context = new FootballStoreContext(optionsBuilder.Options);
+var itemService = new ItemService(context);
 
 // Очистити всі товари
 DeleteAllItems(context);
 
-// Створити новий товар
-EnsureItem(context);
+// Створити категорію
+EnsureCategory(context);
 
-// Змінити ціни
-UpdateItems(context);
+// Додати новий товар через сервіс
+await itemService.CreateAsync(new CreateItemDto
+{
+    Name = "Тренувальний м’яч",
+    Quantity = 10,
+    Description = "Класичний футбольний м’яч для тренувань",
+    IsOnSale = true,
+    PurchasedDate = DateTime.UtcNow,
+    CurrentOrFinalPrice = 650,
+    CategoryId = context.Categories.First().Id
+});
 
-// Вивести всі активні товари
+// Вивести всі товари через сервіс
 Console.WriteLine("🛒 Товари в базі:");
-foreach (var item in context.Items.Where(i => i.IsActive))
+var items = await itemService.GetAllAsync(new ItemQueryParameters());
+foreach (var item in items)
 {
-    Console.WriteLine($"- {item.Id}: {item.Description}, {item.CurrentOrFinalPrice}₴, Created: {item.CreatedDate}, Active: {item.IsActive}");
+    Console.WriteLine($"- {item.Id}: {item.Name}, {item.CurrentOrFinalPrice}₴, OnSale: {item.IsOnSale}");
 }
 
+// 🔧 Старі методи (крім CreateItem) залишаються:
 
-// 🔧 Методи:
-
-static void EnsureItem(FootballStoreContext context)
+static void EnsureCategory(FootballStoreContext context)
 {
-    var item = new Item
+    if (!context.Categories.Any())
     {
-        Quantity = 10,
-        Description = "Кросівки для футболу",
-        Notes = "Новинка сезону",
-        IsOnSale = true,
-        PurchasedDate = DateTime.UtcNow,
-        PurchasePrice = 1200,
-        CurrentOrFinalPrice = 1499
-    };
-
-    context.Items.Add(item);
-    context.SaveChanges();
-}
-
-static void UpdateItems(FootballStoreContext context)
-{
-    var items = context.Items.ToList();
-
-    foreach (var item in items)
-    {
-        item.CurrentOrFinalPrice += 100; // умовна зміна
+        var category = new Category { Name = "Екіпірування" };
+        context.Categories.Add(category);
+        context.SaveChanges();
     }
-
-    context.SaveChanges();
 }
 
 static void DeleteAllItems(FootballStoreContext context)
 {
     var items = context.Items.ToList();
-
     foreach (var item in items)
     {
-        context.Items.Remove(item); // буде soft-delete
+        context.Items.Remove(item); // soft-delete
     }
 
     context.SaveChanges();
