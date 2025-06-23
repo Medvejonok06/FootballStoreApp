@@ -1,0 +1,20 @@
+{
+  "Version": 1,
+  "Hash": "Uj0TUfPqxQztkXYc+bGYFDEIz/HEn0ZbK/4EYlnd7S8=",
+  "Source": "FootballStoreWeb",
+  "BasePath": "_content/FootballStoreWeb",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [
+    {
+      "Name": "FootballStoreWeb\\wwwroot",
+      "Source": "FootballStoreWeb",
+      "ContentRoot": "C:\\Users\\User\\Desktop\\FootballStoreWeb\\wwwroot\\",
+      "BasePath": "_content/FootballStoreWeb",
+      "Pattern": "**"
+    }
+  ],
+  "Assets": [],
+  "Endpoints": []
+}
