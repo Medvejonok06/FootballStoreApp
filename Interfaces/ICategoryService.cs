@@ -1,4 +1,6 @@
 using FootballStoreApp.Dtos;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace FootballStoreApp.Interfaces
 {

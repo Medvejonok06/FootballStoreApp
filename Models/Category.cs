@@ -7,7 +7,7 @@ namespace FootballStoreApp.Models
     {
         [Required]
         [StringLength(InventoryModelsConstants.NAME_MAX_LENGTH)]
-        public string Name { get; set; } = null!;
+        public new string Name { get; set; } = null!;
 
         public List<Item> Items { get; set; } = new();
 

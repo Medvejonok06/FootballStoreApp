@@ -30,7 +30,7 @@ namespace FootballStoreApp.Models
         {
             if (!optionsBuilder.IsConfigured)
             {
-                // ⚠️ У Production краще налаштовувати через DI та appsettings.json
+                //У Production краще налаштовувати через DI та appsettings.json
             }
         }
 
@@ -94,7 +94,7 @@ namespace FootballStoreApp.Models
             OnModelCreatingPartial(modelBuilder);
         }
 
-        // 🟨 Додаємо SaveChanges() для аудиту
+        //Додаємо SaveChanges() для аудиту
         public override int SaveChanges()
         {
             const int systemUserId = 0;

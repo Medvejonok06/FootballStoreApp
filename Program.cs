@@ -1,66 +1,43 @@
 ﻿using FootballStoreApp.Models;
-using FootballStoreApp.Dtos;
+using FootballStoreApp.Repositories;
 using FootballStoreApp.Services;
 using FootballStoreApp.Interfaces;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
+using FluentValidation;
+using FluentValidation.AspNetCore;
 
-IConfiguration config = new ConfigurationBuilder()
-    .SetBasePath(Directory.GetCurrentDirectory())
-    .AddJsonFile("appsettings.json", optional: false)
-    .Build();
+var builder = WebApplication.CreateBuilder(args);
 
-var optionsBuilder = new DbContextOptionsBuilder<FootballStoreContext>();
-optionsBuilder.UseNpgsql(config.GetConnectionString("FootballStore"));
+// Налаштування DbContext з конекшеном
+builder.Services.AddDbContext<FootballStoreContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("FootballStore")));
 
-using var context = new FootballStoreContext(optionsBuilder.Options);
-var itemService = new ItemService(context);
+// Додаємо UnitOfWork, репозиторії та сервіси
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddScoped<IItemService, ItemService>();
+builder.Services.AddScoped<ICategoryService, CategoryService>();
 
-// Очистити всі товари
-DeleteAllItems(context);
+// Додаємо контролери
+builder.Services.AddControllers();
 
-// Створити категорію
-EnsureCategory(context);
+// Підключаємо FluentValidation
+builder.Services.AddFluentValidationAutoValidation();
+builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
-// Додати новий товар через сервіс
-await itemService.CreateAsync(new CreateItemDto
-{
-    Name = "Тренувальний м’яч",
-    Quantity = 10,
-    Description = "Класичний футбольний м’яч для тренувань",
-    IsOnSale = true,
-    PurchasedDate = DateTime.UtcNow,
-    CurrentOrFinalPrice = 650,
-    CategoryId = context.Categories.First().Id
-});
+// Додаємо Swagger для документації
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 
-// Вивести всі товари через сервіс
-Console.WriteLine("🛒 Товари в базі:");
-var items = await itemService.GetAllAsync(new ItemQueryParameters());
-foreach (var item in items)
-{
-    Console.WriteLine($"- {item.Id}: {item.Name}, {item.CurrentOrFinalPrice}₴, OnSale: {item.IsOnSale}");
-}
+var app = builder.Build();
 
-// 🔧 Старі методи (крім CreateItem) залишаються:
+// Використовуємо Swagger завжди, без перевірки середовища
+app.UseSwagger();
+app.UseSwaggerUI();
 
-static void EnsureCategory(FootballStoreContext context)
-{
-    if (!context.Categories.Any())
-    {
-        var category = new Category { Name = "Екіпірування" };
-        context.Categories.Add(category);
-        context.SaveChanges();
-    }
-}
+app.UseHttpsRedirection();
 
-static void DeleteAllItems(FootballStoreContext context)
-{
-    var items = context.Items.ToList();
-    foreach (var item in items)
-    {
-        context.Items.Remove(item); // soft-delete
-    }
+app.UseAuthorization();
 
-    context.SaveChanges();
-}
+app.MapControllers();
+
+app.Run();

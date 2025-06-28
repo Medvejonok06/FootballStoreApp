@@ -1,22 +1,26 @@
 using FootballStoreApp.Dtos;
 using FootballStoreApp.Interfaces;
 using FootballStoreApp.Models;
-using Microsoft.EntityFrameworkCore;
+using FootballStoreApp.Repositories;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace FootballStoreApp.Services
 {
     public class CategoryService : ICategoryService
     {
-        private readonly FootballStoreContext _context;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public CategoryService(FootballStoreContext context)
+        public CategoryService(IUnitOfWork unitOfWork)
         {
-            _context = context;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<List<CategoryDto>> GetAllAsync()
         {
-            var categories = await _context.Categories.ToListAsync();
+            var categories = await _unitOfWork.CategoryRepository.GetAllAsync();
+
             return categories.Select(c => new CategoryDto
             {
                 Id = c.Id,
@@ -26,33 +30,41 @@ namespace FootballStoreApp.Services
 
         public async Task<CategoryDto?> GetByIdAsync(int id)
         {
-            var category = await _context.Categories.FindAsync(id);
+            var category = await _unitOfWork.CategoryRepository.GetByIdAsync(id);
             if (category == null) return null;
 
-            return new CategoryDto { Id = category.Id, Name = category.Name };
+            return new CategoryDto
+            {
+                Id = category.Id,
+                Name = category.Name
+            };
         }
 
         public async Task<CategoryDto> CreateAsync(CreateCategoryDto dto)
         {
             var category = new Category
             {
-                Name = dto.Name
+                Name = dto.Name,
+                IsActive = true
             };
 
-            _context.Categories.Add(category);
-            await _context.SaveChangesAsync();
+            await _unitOfWork.CategoryRepository.AddAsync(category);
+            await _unitOfWork.SaveAsync();
 
-            return new CategoryDto { Id = category.Id, Name = category.Name };
+            return new CategoryDto
+            {
+                Id = category.Id,
+                Name = category.Name
+            };
         }
 
         public async Task<bool> DeleteAsync(int id)
         {
-            var category = await _context.Categories.FindAsync(id);
+            var category = await _unitOfWork.CategoryRepository.GetByIdAsync(id);
             if (category == null) return false;
 
-            _context.Categories.Remove(category);
-            await _context.SaveChangesAsync();
-
+            _unitOfWork.CategoryRepository.Remove(category);
+            await _unitOfWork.SaveAsync();
             return true;
         }
     }

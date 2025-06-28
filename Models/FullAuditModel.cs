@@ -21,7 +21,7 @@ namespace FootballStoreApp.Models
         public bool IsActive { get; set; }
 
         [StringLength(50)]
-        public string Name { get; set; } = string.Empty;  // ✅ виправлено: ініціалізовано
+        public string Name { get; set; } = string.Empty;
 
         [Required]
         [DefaultValue(false)]

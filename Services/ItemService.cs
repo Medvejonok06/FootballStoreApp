@@ -2,31 +2,59 @@ using FootballStoreApp.Dtos;
 using FootballStoreApp.Interfaces;
 using FootballStoreApp.Models;
 using Microsoft.EntityFrameworkCore;
+using FootballStoreApp.Repositories;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace FootballStoreApp.Services
 {
     public class ItemService : IItemService
     {
-        private readonly FootballStoreContext _context;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public ItemService(FootballStoreContext context)
+        public ItemService(IUnitOfWork unitOfWork)
         {
-            _context = context;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<List<ItemDto>> GetAllAsync(ItemQueryParameters parameters)
         {
-            var query = _context.Items
-                .Where(i => i.IsActive && !i.IsDeleted);
+            var query = _unitOfWork.ItemRepository
+                .GetAll()
+                .Where(i => !i.IsDeleted && i.IsActive);
 
             if (!string.IsNullOrEmpty(parameters.Name))
+            {
                 query = query.Where(i => i.Name.ToLower().Contains(parameters.Name.ToLower()));
+            }
 
             if (parameters.MinPrice.HasValue)
+            {
                 query = query.Where(i => i.CurrentOrFinalPrice >= parameters.MinPrice);
+            }
 
             if (parameters.MaxPrice.HasValue)
+            {
                 query = query.Where(i => i.CurrentOrFinalPrice <= parameters.MaxPrice);
+            }
+
+            if (!string.IsNullOrEmpty(parameters.SortBy))
+            {
+                switch (parameters.SortBy.ToLower())
+                {
+                    case "name":
+                        query = parameters.Descending ? query.OrderByDescending(i => i.Name) : query.OrderBy(i => i.Name);
+                        break;
+                    case "price":
+                        query = parameters.Descending ? query.OrderByDescending(i => i.CurrentOrFinalPrice) : query.OrderBy(i => i.CurrentOrFinalPrice);
+                        break;
+                    case "quantity":
+                        query = parameters.Descending ? query.OrderByDescending(i => i.Quantity) : query.OrderBy(i => i.Quantity);
+                        break;
+                }
+            }
 
             query = query
                 .Skip((parameters.Page - 1) * parameters.PageSize)
@@ -47,8 +75,8 @@ namespace FootballStoreApp.Services
 
         public async Task<ItemDto?> GetByIdAsync(int id)
         {
-            var item = await _context.Items.FindAsync(id);
-            if (item == null || item.IsDeleted)
+            var item = await _unitOfWork.ItemRepository.GetByIdAsync(id);
+            if (item == null || item.IsDeleted || !item.IsActive)
                 return null;
 
             return new ItemDto
@@ -75,11 +103,44 @@ namespace FootballStoreApp.Services
                 IsOnSale = dto.IsOnSale,
                 PurchasedDate = dto.PurchasedDate?.ToUniversalTime(),
                 SoldDate = dto.SoldDate?.ToUniversalTime(),
-                CategoryId = dto.CategoryId
+                CategoryId = dto.CategoryId,
+                IsActive = true,
+                CreatedDate = DateTime.UtcNow
             };
 
-            _context.Items.Add(item);
-            await _context.SaveChangesAsync();
+            await _unitOfWork.ItemRepository.AddAsync(item);
+            await _unitOfWork.SaveAsync();
+
+            return new ItemDto
+            {
+                Id = item.Id,
+                Name = item.Name,
+                Description = item.Description,
+                Quantity = item.Quantity,
+                CurrentOrFinalPrice = item.CurrentOrFinalPrice,
+                CategoryId = item.CategoryId
+            };
+        }
+
+        public async Task<ItemDto?> UpdateAsync(int id, UpdateItemDto dto)
+        {
+            var item = await _unitOfWork.ItemRepository.GetByIdAsync(id);
+            if (item == null || item.IsDeleted || !item.IsActive)
+                return null;
+
+            item.Name = dto.Name;
+            item.Description = dto.Description;
+            item.Notes = dto.Notes;
+            item.Quantity = dto.Quantity;
+            item.PurchasePrice = dto.PurchasePrice;
+            item.CurrentOrFinalPrice = dto.CurrentOrFinalPrice;
+            item.IsOnSale = dto.IsOnSale;
+            item.PurchasedDate = dto.PurchasedDate?.ToUniversalTime();
+            item.SoldDate = dto.SoldDate?.ToUniversalTime();
+            item.CategoryId = dto.CategoryId;
+            item.LastModifiedDate = DateTime.UtcNow;
+
+            await _unitOfWork.SaveAsync();
 
             return new ItemDto
             {
@@ -94,43 +155,14 @@ namespace FootballStoreApp.Services
 
         public async Task<bool> DeleteAsync(int id)
         {
-            var item = await _context.Items.FindAsync(id);
-            if (item == null)
+            var item = await _unitOfWork.ItemRepository.GetByIdAsync(id);
+            if (item == null || item.IsDeleted)
                 return false;
 
-            _context.Items.Remove(item); // спрацює soft-delete через SaveChanges override
-            await _context.SaveChangesAsync();
+            item.IsDeleted = true;
+            item.IsActive = false;
+            await _unitOfWork.SaveAsync();
             return true;
-        }
-
-        public async Task<ItemDto?> UpdateAsync(int id, UpdateItemDto dto)
-        {
-            var item = await _context.Items.FindAsync(id);
-            if (item == null)
-                return null;
-
-            item.Name = dto.Name;
-            item.Description = dto.Description;
-            item.Notes = dto.Notes;
-            item.Quantity = dto.Quantity;
-            item.PurchasePrice = dto.PurchasePrice;
-            item.CurrentOrFinalPrice = dto.CurrentOrFinalPrice;
-            item.IsOnSale = dto.IsOnSale;
-            item.PurchasedDate = dto.PurchasedDate?.ToUniversalTime();
-            item.SoldDate = dto.SoldDate?.ToUniversalTime();
-            item.CategoryId = dto.CategoryId;
-
-            await _context.SaveChangesAsync();
-
-            return new ItemDto
-            {
-                Id = item.Id,
-                Name = item.Name,
-                Description = item.Description,
-                Quantity = item.Quantity,
-                CurrentOrFinalPrice = item.CurrentOrFinalPrice,
-                CategoryId = item.CategoryId
-            };
         }
     }
 }

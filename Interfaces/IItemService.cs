@@ -1,4 +1,6 @@
 using FootballStoreApp.Dtos;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace FootballStoreApp.Interfaces
 {
@@ -8,6 +10,6 @@ namespace FootballStoreApp.Interfaces
         Task<ItemDto?> GetByIdAsync(int id);
         Task<ItemDto> CreateAsync(CreateItemDto dto);
         Task<bool> DeleteAsync(int id);
-        Task<ItemDto?> UpdateAsync(int id, UpdateItemDto dto); // ✅ тільки сигнатура
+        Task<ItemDto?> UpdateAsync(int id, UpdateItemDto dto);
     }
 }
