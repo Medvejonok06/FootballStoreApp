@@ -1,12 +1,12 @@
 ﻿using System;
-using System.Collections.Generic;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using FootballStoreApp.Models;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 
 namespace FootballStoreApp.Models
 {
-    public partial class FootballStoreContext : DbContext
+    public partial class FootballStoreContext : IdentityDbContext<ApplicationUser>
     {
         public FootballStoreContext()
         {
@@ -25,17 +25,18 @@ namespace FootballStoreApp.Models
         public virtual DbSet<Category> Categories { get; set; } = null!;
         public virtual DbSet<CategoryDetail> CategoryDetails { get; set; } = null!;
 
-
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             if (!optionsBuilder.IsConfigured)
             {
-                //У Production краще налаштовувати через DI та appsettings.json
+                // Production: підключення бажано через appsettings.json + DI
             }
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            base.OnModelCreating(modelBuilder); // щоб Identity створило свої таблиці
+
             modelBuilder.Entity<Customer>(entity =>
             {
                 entity.ToTable("customers");
@@ -91,14 +92,17 @@ namespace FootballStoreApp.Models
                 entity.Property(e => e.StockQuantity).HasColumnName("stock_quantity");
             });
 
+            // Якщо маєте конфігурації для Category і CategoryDetail – додавайте тут
+            // modelBuilder.Entity<Category>(...)
+            // modelBuilder.Entity<CategoryDetail>(...)
+
             OnModelCreatingPartial(modelBuilder);
         }
 
-        //Додаємо SaveChanges() для аудиту
         public override int SaveChanges()
         {
             const int systemUserId = 0;
-            const int loggedInUserId = 123; // умовний поточний користувач
+            const int loggedInUserId = 123; // умовний користувач
 
             var entries = ChangeTracker.Entries<FullAuditModel>();
 
@@ -106,7 +110,6 @@ namespace FootballStoreApp.Models
             {
                 var now = DateTime.UtcNow;
 
-                // Примусово конвертуємо дати до UTC, якщо не встановлено Kind
                 if (entry.Entity is Item item)
                 {
                     if (item.PurchasedDate.HasValue && item.PurchasedDate.Value.Kind == DateTimeKind.Unspecified)
@@ -130,7 +133,6 @@ namespace FootballStoreApp.Models
                         break;
 
                     case EntityState.Deleted:
-                        // Soft-delete
                         entry.State = EntityState.Modified;
                         entry.Entity.IsActive = false;
                         entry.Entity.LastModifiedDate = now;
