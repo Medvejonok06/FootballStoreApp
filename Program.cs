@@ -94,6 +94,8 @@ builder.Services.AddAuthentication();
 
 var app = builder.Build();
 
+app.UseMiddleware<FootballStoreApp.Middleware.ExceptionMiddleware>();
+
 app.UseSwagger();
 app.UseSwaggerUI();
 
